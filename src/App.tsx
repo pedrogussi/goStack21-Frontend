@@ -1,6 +1,6 @@
 import React from 'react';
-// import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
+import SignIn from './pages/SignIn';
+// import SignUp from './pages/SignUp';
 
 import Globalstyle from './styles/global';
 
@@ -9,8 +9,8 @@ import Globalstyle from './styles/global';
 const App: React.FC = () => (
   <>
   
-  {/* <SignIn /> */}
-  <SignUp />
+  <SignIn />
+  {/* <SignUp /> */}
 
   <Globalstyle/> 
   </>
