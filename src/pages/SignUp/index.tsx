@@ -1,10 +1,13 @@
-import React, {useCallback, useRef} from 'react';
-import {FiArrowLeft,FiMail,FiUser, FiLock} from 'react-icons/fi';
+import React, { useCallback, useRef } from 'react';
+import { FiArrowLeft, FiMail, FiUser, FiLock } from 'react-icons/fi';
 
-import {FormHandles} from '@unform/core';
+import { FormHandles } from '@unform/core';
 
-import { Form} from '@unform/web';
+import { Form } from '@unform/web';
+import { Link, useHistory } from 'react-router-dom';
 
+import api from '../../services/apiClient';
+import {useToast} from '../../hooks/ToastContext'
 import * as Yup from 'yup';
 import getValidationErrors from '../../utils/getValidationErrors';
 
@@ -13,17 +16,24 @@ import logoImg from '../../assets/logo.svg';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
-import {Container, Content, Background} from './styles';
+import { Container, Content, AnimationContainer, Background } from './styles';
 
+
+interface SignUpFormData {
+    name:string;
+    email:string;
+    password:string;
+}
 
 const SignUp: React.FC = () => {
     const formRef = useRef<FormHandles>(null);
-
-
-
-    const handleSubmit= useCallback(async (data: object) =>{
+    const {addToast} = useToast();
+    const history = useHistory();
+    const handleSubmit = useCallback(async (data: SignUpFormData) => {
         try {
-            formRef.current?.setErrors({})
+            formRef.current?.setErrors({});
+
+
             const schema = Yup.object().shape({
                 name: Yup.string().required('Nome obrigatório'),
                 email: Yup.string().required('Email obrigatório').email('Digite um e-mail valido!'),
@@ -32,40 +42,59 @@ const SignUp: React.FC = () => {
             await schema.validate(data, {
                 abortEarly: false,
             });
+            await api.post('/users', data);
+            history.push('/');
+            addToast({
+                type:'success',
+                title: 'Cadastro Realizado',
+                description: 'Já pode fazer seu login!!'
+            });
+
 
         } catch (error) {
-            console.log(error)
-
-            const errors = getValidationErrors(error);
-
-            formRef.current?.setErrors(errors)
+            if (error instanceof Yup.ValidationError) {
+                const errors = getValidationErrors(error);
+                formRef.current?.setErrors(errors);
+                return;
+            }
+            //Caso a condição seja falsa, ou seja, não exista o erro do tipo validation error, então disparar um toast
+            addToast({
+                type: 'info',
+                title: 'Error no Cadastro',
+                description: 'Tente novamente',
+            });
         }
-    },[])
+    }, [history, addToast])
     return (
         <Container>
-    <Background/>
-    
-    <Content>
-    <img src={logoImg} alt="Gobarber" />
+                <Background />
+
+                <Content>
+            <AnimationContainer>
+
+                    <img src={logoImg} alt="Gobarber" />
 
 
-     <Form ref={formRef} onSubmit={handleSubmit} >
+                    <Form ref={formRef} onSubmit={handleSubmit} >
 
-         <h1>Faça seu Cadastro</h1>
+                        <h1>Faça seu Cadastro</h1>
 
-         <Input icon={FiUser} name="name" placeholder="Nome"/>
-         <Input icon={FiMail} name="email" placeholder="E-mail"/>
+                        <Input icon={FiUser} name="name" placeholder="Nome" />
+                        <Input icon={FiMail} name="email" placeholder="E-mail" />
 
-         <Input icon={FiLock} name="password" type="password" placeholder="Senha" /> 
-         <Button type="submit" placeholder="entrar">Cadastrar</Button>
+                        <Input icon={FiLock} name="password" type="password" placeholder="Senha" />
+                        <Button type="submit" placeholder="entrar">Cadastrar</Button>
 
-     </Form>
-     <a href="Login">
-         <FiArrowLeft />
-     Voltar para Logon
-     </a>
-    </Content>
-</Container> 
+                    </Form>
+                        <Link to="/">
+                            <FiArrowLeft />
+                            Voltar para Logon
+                        </Link>
+                    </AnimationContainer>
+
+                </Content>
+
+        </Container>
     )
 }
 
