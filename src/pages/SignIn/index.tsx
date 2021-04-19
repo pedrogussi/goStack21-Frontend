@@ -2,6 +2,8 @@ import React, { useCallback, useRef } from 'react';
 
 import * as Yup from 'yup';
 import {useAuth} from '../../hooks/AuthContext';
+import {useToast} from '../../hooks/ToastContext';
+
 import { FiLogIn, FiMail, FiLock } from 'react-icons/fi';
 
 import { Form } from '@unform/web';
@@ -27,6 +29,7 @@ const SignIn: React.FC = () => {
     const formRef = useRef<FormHandles>(null);
 
     const {signIn} =useAuth();
+    const {addToast} =useToast();
 
     // console.log(user)
 
@@ -40,19 +43,28 @@ const SignIn: React.FC = () => {
             await schema.validate(data, {
                 abortEarly: false,
             });
-            signIn({
+            await signIn({
                 email:data.email,
                 password:data.password,
             });
 
         } catch (error) {
-            console.log(error)
-
-            const errors = getValidationErrors(error);
+            if( error instanceof Yup.ValidationError) {
+                const errors = getValidationErrors(error);
 
             formRef.current?.setErrors(errors)
+            }
+            //Caso a condição seja falsa, ou seja, não exista o erro do tipo validation error, então disparar um toast
+
+            addToast({
+                type: 'info',
+                title:  'Error na autenticação',
+                description: 'Ocorreu um erro ao fazer login',
+            });
+
+            
         }
-    },[signIn])
+    },[signIn, addToast])
 
     return (
         <Container>
